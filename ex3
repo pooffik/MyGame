@@ -1,0 +1,174 @@
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Scanner;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+public class MyGame {
+   public static String compMove;
+   public static String userMove;
+   public static String keyHMAC;
+   public static Integer intUserMove;
+   public static Integer intCompMove;
+   public static boolean userWin;
+    public static void main(String[] args) throws InvalidKeyException, NoSuchAlgorithmException, IllegalStateException, UnsupportedEncodingException {
+        HashSet<String> moves = new HashSet<String>();
+       for(int i=0; i<args.length; i++) {
+            moves.add(args[i]);
+        } 
+        if (args.length%2!=0 && args.length>=3 && args.length==moves.size() ){ 
+            compMove(args);
+            KeyGen.gen() ;  
+         System.out.println("Choose your move:");
+            for (int i = 0; i < args.length; i++) {
+                int j=i+1;
+                 System.out.println(j+"."+args[i]);
+            }
+            System.out.println("?.Help");
+            System.out.println("0.Exit");
+            Scanner sc = new Scanner(System.in);
+            System.out.print("Enter number of your move:");
+            if(!sc.hasNext("^[?]{1}")){
+            if (sc.hasNextInt()){
+             intUserMove=sc.nextInt();
+             if(intUserMove==0){System.exit(intCompMove);}
+            if(intUserMove<=args.length && intUserMove>0){
+            int number = intUserMove-1;  
+            userMove=args[number];
+            System.out.println("Your move:"+userMove); 
+            Rules.rule(args);
+            }else{main(args);}
+        }  
+        else{main(args);}  
+        }
+            else{
+              System.out.println("HELP:");
+              System.out.println("C-computer");
+              System.out.println("U-user");
+              System.out.println("D-drow");
+              System.out.print(" ");
+              Tab.dashes(args);
+              System.out.print("|C|U|");
+              for (int i = 1; i < args.length+1; i++){ 
+                System.out.print(" "+i+" |"); 
+                }
+              System.out.println("");
+              System.out.print(" ");
+              Tab.dashes(args);
+              for (int i = 0; i < args.length; i++) { 
+                System.out.print("| "+(i+1)+" |"); 
+               Tab.help(args,i+1);
+              System.out.println("");
+              }
+              System.out.print(" ");
+              Tab.dashes(args);
+            }
+      }
+        else{
+            System.out.println("ERROR! ");
+            if(args.length%2==0){System.out.println("Enter odd number of moves! ");}
+            if(args.length<=3){System.out.println("Enter number of moves >=3! ");}
+            if(args.length!=moves.size()){System.out.println("Detected same moves ! ");}
+        }
+        }
+      public static void compMove(String[] args){
+        SecureRandom random = new SecureRandom();
+        intCompMove = random.nextInt(args.length);
+       compMove=args[intCompMove];
+       }
+  private static class KeyGen{
+  private static final String HMAC_ALGO = "HmacSHA256";
+public static void gen() throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException{
+        SecureRandom key = new SecureRandom();
+        byte bytes[] = new byte[16]; 
+        key.nextBytes(bytes);
+        Mac signer = Mac.getInstance(HMAC_ALGO);
+        SecretKeySpec keySpec = new SecretKeySpec(bytes, HMAC_ALGO);
+        signer.init(keySpec);
+        byte[] HMAC = signer.doFinal(compMove.getBytes("utf-8"));
+        keyHMAC=bytesToHex(bytes);
+        System.out.println("HMAC: " + bytesToHex(HMAC));
+    }
+ }     
+    public static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length*2);
+        for(byte b: bytes) {
+           sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+    private static class Rules{
+      public static void rule(String[] args){
+        String[] win = new String[args.length-1];
+        int j=0;
+        for(int i=intUserMove; i<args.length; i++) {
+          win[j]=args[i];
+          j++;
+        }
+        int k=args.length-intUserMove;
+        for(int i=0; i<intUserMove-1; i++) {
+          win[k]=args[i];
+          k++;
+        }
+        int winMove=Arrays.asList(win).indexOf(compMove);
+      if(compMove==userMove){
+          System.out.println("Computer move:"+compMove);
+          System.out.println("DRAW!"); 
+          System.out.println("HMAC key:"+keyHMAC);
+           }
+        else{
+          if (winMove>win.length/2-1){
+            System.out.println("Computer move:"+compMove);
+            System.out.println("Your win!!!"); 
+            System.out.println("HMAC key:"+keyHMAC);
+          }
+          else{
+          System.out.println("Computer move:"+compMove);
+          System.out.println("Computer win!!!"); 
+          System.out.println("HMAC key:"+keyHMAC);
+          }
+        }
+       }
+      }
+      private static class Tab{
+        public static void tabGen(String[] args){
+        }
+        public static void help(String[] args,Integer tvalue){
+         String[] win = new String[args.length];
+        int j=0;
+        for(int i=tvalue; i<args.length; i++) {
+          win[j]=args[i];
+          j++;
+        }
+        int k=args.length-tvalue;
+        for(int i=0; i<tvalue-1; i++) {
+          win[k]=args[i];
+          k++;
+        }
+        win[win.length-1]=args[tvalue-1];
+        
+        for (int i = 0; i < args.length; i++) {
+          int winMove=Arrays.asList(win).indexOf(args[i]);
+        if(win.length-1==winMove){
+               System.out.print(" D |");   
+            }
+            else{
+              if (winMove>(win.length-1)/2-1){
+                System.out.print(" U |"); 
+              }
+              else{
+             System.out.print(" C |"); 
+            }
+           
+        }
+        }
+        }
+        public static void dashes(String[] args){
+          for (int i = 0; i < args.length; i++) {System.out.print("-----");}
+          System.out.println("");
+        }
+      }
+    }
